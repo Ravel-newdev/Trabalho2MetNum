@@ -1,25 +1,43 @@
-CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17
-INCLUDES = -I include
+CXX      := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -O2
 
-SRC = src/main.cpp \
-      src/matriz.cpp \
-      src/gauss.cpp \
-      src/gauss_jordan.cpp \
-      src/cramer.cpp \
-      src/analise.cpp
+SRC_DIR  := src
+OBJ_DIR  := obj
+BIN_DIR  := bin
+TARGET   := trabalho2
 
-OBJ = $(SRC:.cpp=.o)
+# encontra recursivamente todos os .cpp
+SRCS := $(shell find $(SRC_DIR) -name "*.cpp") main.cpp
 
-EXEC = cordas
+# gera caminho equivalente em obj/
+OBJS := $(SRCS:%=$(OBJ_DIR)/%.o)
 
-all: $(EXEC)
+all: directories $(BIN_DIR)/$(TARGET)
 
-$(EXEC): $(OBJ)
-	$(CXX) $(OBJ) -o $(EXEC)
+# regra de linkagem
+$(BIN_DIR)/$(TARGET): $(OBJS)
+	@echo "[LD] Ligando objetos..."
+	$(CXX) $(CXXFLAGS) $^ -o $@
+	@echo "Compilação concluída com sucesso."
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+# regra genérica: compila qualquer .cpp dentro de src/
+$(OBJ_DIR)/%.cpp.o: %.cpp
+	@mkdir -p $(dir $@)
+	@echo "[CC] Compilando $< ..."
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# regra especial para main.cpp
+$(OBJ_DIR)/main.cpp.o: main.cpp
+	@mkdir -p $(dir $@)
+	@echo "[CC] Compilando main.cpp ..."
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+directories:
+	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 clean:
-	rm -f $(OBJ) $(EXEC)
+	@echo "Removendo arquivos objeto e executável..."
+	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+	@echo "Limpeza concluída."
+
+rebuild: clean all
